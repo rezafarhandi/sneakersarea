@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keranjang Belanja</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <img src="2.svg" class="logo" alt="Logo">
+    </header>
+
+    <nav>
+        <a href="index.html">Beranda</a>
+        <a href="keranjang.html">Keranjang Belanja</a>
+        <a href="kontak.html">Kontak</a>
+    </nav>
+
+    <section>
+        <h1>Keranjang Belanja</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                    <th>Hapus</th>
+                </tr>
+            </thead>
+            <tbody id="cart-content"></tbody>
+        </table>
+        <div class="cart-buttons">
+            <button class="update-cart" onclick="updateCart()">Update Cart</button>
+            <button class="continue-shopping" onclick="continueShopping()">Continue Shopping</button>
+            <button class="checkout-btn" onclick="openCheckout()">Checkout</button>
+        </div>
+    </section>
+
+    <!-- Floating Checkout Form -->
+    <div id="checkout-modal" class="checkout-modal">
+        <div class="checkout-content">
+            <span class="close-btn" onclick="closeCheckout()">&times;</span>
+            <h2>Checkout</h2>
+            <form id="checkout-form">
+                <label for="name">Nama Penerima:</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="address">Alamat:</label>
+                <textarea id="address" name="address" rows="3" required></textarea>
+
+                <label for="zipcode">Kode Pos:</label>
+                <input type="text" id="zipcode" name="zipcode" required>
+
+                <h3>Informasi Pembayaran</h3>
+                <label for="card-number">Nomor Kartu:</label>
+                <input type="text" id="card-number" name="card-number" maxlength="16" required>
+
+                <label for="expiry-date">Tanggal Expired:</label>
+                <input type="month" id="expiry-date" name="expiry-date" required>
+
+                <label for="cvv">CVV:</label>
+                <input type="text" id="cvv" name="cvv" maxlength="3" required>
+
+                <button type="submit" class="confirm-payment">Bayar Sekarang</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let keranjang = JSON.parse(localStorage.getItem('keranjang')) || [];
+        let cartContent = document.getElementById('cart-content');
+
+        // Fungsi untuk memformat angka menjadi format Rupiah
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka).replace(/,00$/, '');
+        }
+
+        // Fungsi untuk menampilkan keranjang
+        function renderCart() {
+            cartContent.innerHTML = '';
+            keranjang.forEach((produk, index) => {
+                let subtotal = produk.harga * produk.jumlah;
+                let row = `
+                    <tr>
+                        <td><img src="${produk.gambar}" alt="${produk.nama}" style="max-width: 100px; max-height: 100px;"></td>
+                        <td>${produk.nama}</td>
+                        <td>${formatRupiah(produk.harga)}</td>
+                        <td>
+                            <input type="number" value="${produk.jumlah}" min="1" data-index="${index}" onchange="updateQuantity(this)">
+                        </td>
+                        <td id="subtotal-${index}">${formatRupiah(subtotal)}</td>
+                        <td><button class="button1" onclick="hapusDariKeranjang(${index})">Hapus</button></td>
+                    </tr>
+                `;
+                cartContent.innerHTML += row;
+            });
+        }
+
+        function openCheckout() {
+            document.getElementById('checkout-modal').style.display = 'block';
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkout-modal').style.display = 'none';
+        }
+
+        function updateQuantity(input) {
+            let index = input.getAttribute('data-index');
+            let newQuantity = parseInt(input.value);
+
+            if (newQuantity > 0) {
+                keranjang[index].jumlah = newQuantity;
+                localStorage.setItem('keranjang', JSON.stringify(keranjang));
+
+                let newSubtotal = keranjang[index].harga * newQuantity;
+                document.getElementById(`subtotal-${index}`).textContent = formatRupiah(newSubtotal);
+            } else {
+                alert("Quantity harus lebih besar dari 0");
+                input.value = keranjang[index].jumlah;
+            }
+        }
+
+        function updateCart() {
+            localStorage.setItem('keranjang', JSON.stringify(keranjang));
+            alert("Keranjang berhasil diperbarui!");
+        }
+
+        function continueShopping() {
+            window.location.href = "index.html";
+        }
+
+        function hapusDariKeranjang(index) {
+            keranjang.splice(index, 1);
+            localStorage.setItem('keranjang', JSON.stringify(keranjang));
+            renderCart();
+        }
+
+        document.getElementById('checkout-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            alert("Barang Berhasil di Pesan");
+            localStorage.removeItem('keranjang');
+            window.location.href = "index.html";
+        });
+
+        renderCart();
+    </script>
+</body>
+</html>
